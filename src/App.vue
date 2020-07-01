@@ -84,7 +84,7 @@ export default {
   data() {
     return {
       code:
-        "(define fib\n    (lambda (n)\n        (if (< n 2)\n            1\n            (+ (fib (- n 1)) (fib (- n 2))))))\n(fib 20)",
+        "(define fib\n    (lambda (n)\n        (if (< n 2)\n            1\n            (+ (fib (- n 1)) (fib (- n 2))))))\n(fib 20)\n\n(check-equal? (fib 4) 5)\n(check-equal? (fib 7) 21)\n;; (check-equal? (fib 10) 890)",
       feedback: "> Click the green Run button to evaluate your code!",
       editorOptions: {
         tabSize: 4,
