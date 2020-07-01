@@ -1,28 +1,30 @@
 <template>
-  <div>
-    <b-row>
-      <b-col>
-        <h2 class="title">baby-racket v1.0.0</h2>
+  <b-container fluid class="lining">
+    <b-row align-v="center">
+      <b-col cols="7">
+        <h2 class="title">
+          <b-link to="https://github.com/rymaju/baby-racket">baby-racket</b-link>
+        </h2>
       </b-col>
       <b-col>
-        <b-icon-play-fill style="width:2.5em; height:2.5em;" class="text-success" @click="run" />
+        <b-icon-play-fill style="width:3em; height:3em;" class="icon" @click="run" />
       </b-col>
     </b-row>
-    <b-row no-gutters>
-      <b-col style="width:60vw;">
+    <b-row>
+      <b-col md="7">
         <codemirror v-model="code" :options="editorOptions" />
       </b-col>
-      <b-col style="width:40vw">
+      <b-col>
         <codemirror v-model="feedback" :options="feedbackOptions" />
       </b-col>
     </b-row>
-  </div>
+  </b-container>
 </template>
 
 <script>
 import { codemirror } from "vue-codemirror";
 // import base style
-
+// TODO svg animation, lambda blood contract, flows into pentagram thing
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/scheme/scheme";
 import "codemirror/addon/edit/matchbrackets.js";
@@ -41,6 +43,10 @@ export default {
   },
   methods: {
     run() {
+      if (this.evaluating) {
+        return;
+      }
+
       let cleanedCode = "";
 
       for (let line of this.code.split("\n")) {
@@ -49,14 +55,30 @@ export default {
         }
       }
       console.log("evaluating...");
-      const evaluations = evaluate("(list" + cleanedCode + ")");
-      console.log("finished evaluating");
+
       let output = "";
-      for (let statement of evaluations) {
-        if (statement !== undefined)
-          output += "> " + prettify(statement) + "\n";
-      }
-      this.feedback = output;
+
+      new Promise((resolve, reject) => {
+        try {
+          const v = evaluate("(list" + cleanedCode + ")");
+          resolve(v);
+        } catch (err) {
+          reject(err);
+        }
+      })
+        .then(evaluations => {
+          for (let statement of evaluations) {
+            if (statement !== undefined)
+              output += "> " + prettify(statement) + "\n";
+          }
+        })
+        .catch(err => {
+          output += err;
+        })
+        .finally(() => {
+          console.log("finished evaluating");
+          this.feedback = output;
+        });
     }
   },
   data() {
@@ -72,7 +94,7 @@ export default {
         mode: "text/x-scheme",
         theme: "default",
         matchBrackets: true,
-        viewportMargin: 20
+        viewportMargin: Infinity
       },
       feedbackOptions: {
         tabSize: 4,
@@ -80,16 +102,45 @@ export default {
         mode: "text/x-scheme",
         theme: "default",
         matchBrackets: true,
-        readOnly: true
+        readOnly: true,
+        viewportMargin: Infinity
       }
     };
   }
 };
+
+/**
+ *
+ * TODO:
+ * swap play button with spinner and stop concurrent evals
+ *  write readmes
+ * turn this into a component (useful when we embed into my website later)
+ *
+ */
 </script>
 
 <style>
 .title {
   font-weight: 700;
   color: black;
+}
+.CodeMirror {
+  border-left: 1px solid #eee;
+  height: auto;
+}
+b-icon-play-fill:hover {
+  cursor: pointer;
+}
+.icon {
+  color: limegreen;
+}
+.icon:hover {
+  cursor: pointer;
+}
+.icon:active {
+  color: green;
+}
+.lining {
+  border: 1px solid #eee;
 }
 </style>
