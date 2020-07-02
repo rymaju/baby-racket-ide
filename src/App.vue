@@ -37,6 +37,13 @@
     </b-container>
     <b-container class="mt-5">
       <h3>docs</h3>
+      <small>
+        baby-kanren is subset of Racket created entirely in Javascript without external dependencies.
+        The goal of this project is to create a suitable substitute language for
+        Racket's Student Languages and the Scheme used in The Reasoned Schemer Second
+        Edition that can run in the browser. This is mainly an exercise in writing interpreters, if you actually want to run Racket in the brower fast then use webassembly.
+      </small>
+      <br />
       <small>baby-racket is a weak infantile language, and may break or produce unexpected behavior. Its very carefree, and gets confused between strings, symbols, and variables often. That said, it is surprisingly smart sometimes.</small>
       <br />
 
