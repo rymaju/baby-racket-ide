@@ -17,7 +17,7 @@
         </b-col>
         <b-col>
           <codemirror v-model="feedback" :options="feedbackOptions" />
-          <codemirror :options="interactOptions" />
+          <codemirror :options="interactOptions" @keyHandled="keyHandled"/>
         </b-col>
       </b-row>
     </b-container>
@@ -73,7 +73,7 @@ import "codemirror/addon/edit/matchbrackets.js";
 import "codemirror/addon/selection/active-line.js";
 import "pattern.css";
 
-import { evaluateFile } from "baby-racket";
+import { evaluateFile, evaluate } from "baby-racket";
 import dedent from "dedent";
 
 export default {
@@ -99,7 +99,29 @@ export default {
         console.log("error occurred while evaluating!");
         console.error(e);
       }
-    }
+    },
+    keyHandled(cm, name) {
+      if (name === "Enter") {
+        let val;
+        try {
+          val = evaluate(cm.getValue(), {
+            env: this.environment,
+          });
+        } catch (err) {
+          val = err;
+          console.error(err);
+        }
+        if (val !== undefined) {
+          this.feedback +=
+            (this.feedback.length > 0 ? "\n" : "") +
+            "> " +
+            cm.getValue().trim() +
+            "\n" +
+            val;
+        }
+        cm.setValue("");
+      }
+    },
   },
   data() {
     return {
@@ -123,7 +145,7 @@ export default {
                     
                     (cons 'cons (cons 'is (cons 'supported empty)))
                     '(so is quotation)
-                    \`(and ,(string-append "quasiquotes" " and " "unquotes"))
+                    \`(and ,(string-append "quasi" "quotes") and unquotes)
 
                     (filter (lambda (x) (not (string=? x "garbage"))) '("list abstractions " "garbage" "are supported too!"))
 
@@ -160,7 +182,10 @@ export default {
         theme: "default",
         matchBrackets: true,
         viewportMargin: Infinity,
-        lineWrapping: true
+        lineWrapping: true,
+        autofocus: true,
+        styleActiveLine: true,
+
       }
     };
   }
