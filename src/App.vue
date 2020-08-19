@@ -17,7 +17,7 @@
         </b-col>
         <b-col>
           <codemirror v-model="feedback" :options="feedbackOptions" />
-          <codemirror :options="interactOptions" @keyHandled="keyHandled"/>
+          <codemirror :options="interactOptions" @keyHandled="keyHandled" />
         </b-col>
       </b-row>
     </b-container>
@@ -73,7 +73,7 @@ import "codemirror/addon/edit/matchbrackets.js";
 import "codemirror/addon/selection/active-line.js";
 import "pattern.css";
 
-import { evaluateFile, evaluate } from "baby-racket";
+import { evaluateFile, evaluate, STANDARD_ENV } from "baby-racket";
 import dedent from "dedent";
 
 export default {
@@ -88,8 +88,9 @@ export default {
 
       let evaluations = [];
 
+      this.environment = STANDARD_ENV.clone();
       try {
-        evaluations = evaluateFile(this.code);
+        evaluations = evaluateFile(this.code, { env: this.environment });
         evaluations = evaluations.filter(s => s.length !== 0);
         evaluations = evaluations.map(s => "> " + s);
         this.feedback = evaluations.join("\n");
@@ -105,7 +106,7 @@ export default {
         let val;
         try {
           val = evaluate(cm.getValue(), {
-            env: this.environment,
+            env: this.environment
           });
         } catch (err) {
           val = err;
@@ -121,10 +122,11 @@ export default {
         }
         cm.setValue("");
       }
-    },
+    }
   },
   data() {
     return {
+      environment: STANDARD_ENV.clone(),
       code: dedent`(define fib
                       (lambda (n)
                           (if (< n 2)
@@ -171,7 +173,8 @@ export default {
         mode: "text/x-scheme",
         theme: "default",
         matchBrackets: true,
-        readOnly: "nocursor",
+        readOnly: true,
+        cursorHeight: 0,
         viewportMargin: Infinity,
         lineWrapping: true
       },
@@ -184,8 +187,7 @@ export default {
         viewportMargin: Infinity,
         lineWrapping: true,
         autofocus: true,
-        styleActiveLine: true,
-
+        styleActiveLine: true
       }
     };
   }
