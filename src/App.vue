@@ -5,24 +5,10 @@
         <b-col cols="7">
           <h2 class="title">
             <b-link to="https://github.com/rymaju/baby-racket">baby-racket</b-link>
-            <span v-if="kanren" style="color:crimson">+kanren</span>
           </h2>
         </b-col>
         <b-col>
           <b-icon-play-fill style="width:3em; height:3em;" class="icon" @click="run" />
-
-          <b-icon-puzzle
-            class="icon"
-            v-if="!kanren"
-            style="width:2.5em; height:2.5em; margin:0.3em; color:crimson"
-            @click="kanren=!kanren"
-          />
-          <b-icon-puzzle-fill
-            class="icon"
-            v-else
-            style="width: 2.5em; height:2.5em; margin:0.3em; color:crimson"
-            @click="kanren=!kanren"
-          />
         </b-col>
       </b-row>
       <b-row>
@@ -31,71 +17,41 @@
         </b-col>
         <b-col>
           <codemirror v-model="feedback" :options="feedbackOptions" />
-          <codemirror :options="interactOptions" @keyHandled="keyHandled" />
+          <codemirror :options="interactOptions" />
         </b-col>
       </b-row>
     </b-container>
     <b-container class="mt-5">
-      <h3>docs</h3>
-      <small>
-        <b-link to="https://github.com/rymaju/baby-racket">baby-racket</b-link>
-        {{ }}is a subset of Racket created entirely in Javascript without external dependencies.
-        The goal of this project is to create a suitable substitute language for
-        Racket's Student Languages and the Scheme used in
-        <a
-          href="https://mitpress.mit.edu/books/reasoned-schemer-second-edition"
-        >The Reasoned Schemer Second Edition</a>
-        that can run in the browser. This is mainly an exercise in writing interpreters, if you actually want to run Racket in the brower fast then use webassembly.
-      </small>
-      <br />
-      <small>baby-racket is a weak infantile language, and may break or produce unexpected behavior. Its very carefree, and gets confused between strings, symbols, and variables often. That said, it is surprisingly smart sometimes.</small>
-      <br />
+      <b-row>
+        <b-col sm="4">
+          <h3>about</h3>
+          <p>
+            <b-link to="https://github.com/rymaju/baby-racket">baby-racket</b-link>
+            {{ }}is a subset of Racket created entirely in Javascript without external dependencies.
+            The goal of this project is to create a suitable substitute language for
+            Racket's Student Languages
+            that can run in the browser. This is mainly an exercise in writing interpreters, if you actually want to run Racket in the brower fast then use webassembly.
+          </p>
+        </b-col>
 
-      <h4>built-in</h4>
-      <small>
-        If the function exists in Racket you have a 50% chance of it existing here. map, filter, foldr, foldl, andmap, ormap, and all your favorite functions are
-        included too.
-      </small>
-      <div style="color:crimson">
-        <h4>kanren</h4>
-        <small>
-          Uses
-          <b-link to="https://github.com/rymaju/mykanren">mykanren</b-link>
-          {{ }}(a implementation of minikanren made by yours truly) and its behavior fully. For detailed documentation visit the repo.
-        </small>
-        <small>
-          <b>
-            <ul>
-              <li>run</li>
-              <li>run*</li>
-              <li>==</li>
-              <li>defrel</li>
-              <li>disj2</li>
-              <li>conj2</li>
-              <li>disj</li>
-              <li>conj</li>
-              <li>fresh</li>
-              <li>conde</li>
-              <li>conda</li>
-              <li>condu</li>
-              <li>success</li>
-              <li>fail</li>
-            </ul>
-          </b>
-          Also included are these basic list relations (taken directly from mykanren/examples.rkt)
-          <b>
-            <ul>
-              <li>conso</li>
+        <b-col sm="4">
+          <h4>built-in</h4>
+          <p>
+            If the function exists in Racket you have a 50% chance of it existing here. map, filter, foldr, foldl, andmap, ormap, and all your favorite functions are
+            included too. Almost any legal code in a student language is legal code in baby-racket. (Except for big bang and image libraries.)
+          </p>
+        </b-col>
+        <b-col sm="4">
+          <h4>fair warning</h4>
+          <p>
+            baby-racket is a weak infantile language, and may break or produce unexpected
+            behavior. Its very carefree, and gets confused between strings, symbols, and
+            variables often. That said, it can be surprisingly smart sometimes. Play around with it in the browser. Try and see if your favorite functional program works in baby-racket!
+          </p>
+        </b-col>
+      </b-row>
 
-              <li>caro</li>
-              <li>cdro</li>
-              <li>nullo</li>
-              <li>appendo</li>
-            </ul>
-          </b>
-        </small>
-      </div>
-      <p class="mb-4">
+      <p class="mb-3 mt-5">
         Made by
         <b-link to="https://ryanjung.dev">Ryan Jung</b-link>, B.S. Computer Science @ Northeastern University 2023 -
         <b-link to="https://www.github.com/rymaju/baby-racket-ide">See the code for this app here!</b-link>
@@ -117,7 +73,8 @@ import "codemirror/addon/edit/matchbrackets.js";
 import "codemirror/addon/selection/active-line.js";
 import "pattern.css";
 
-import { evaluate, prettify, STANDARD_ENV } from "baby-racket";
+import { evaluateFile } from "baby-racket";
+import dedent from "dedent";
 
 export default {
   name: "App",
@@ -125,82 +82,55 @@ export default {
     codemirror
   },
   methods: {
-    keyHandled(cm, name) {
-      if (!this.evaluating && name === "Enter") {
-        let val;
-        try {
-          val = evaluate(cm.getValue(), {
-            env: this.environment,
-            kanren: this.kanren
-          });
-        } catch (err) {
-          val = err;
-          console.error(err);
-        }
-        if (val !== undefined) {
-          this.feedback +=
-            (this.feedback.length > 0 ? "\n" : "") +
-            "> " +
-            cm.getValue().trim() +
-            "\n" +
-            prettify(val);
-        }
-        cm.setValue("");
-      }
-    },
     run() {
-      if (this.evaluating) {
-        return;
-      }
-
-      let cleanedCode = "";
-
-      for (let line of this.code.split("\n")) {
-        if (!line.startsWith(";")) {
-          cleanedCode += line + " ";
-        }
-      }
       console.log("evaluating...");
       this.evaluating = true;
-      let output = "";
 
-      new Promise((resolve, reject) => {
-        try {
-          const v = evaluate("(list" + cleanedCode + ")", {
-            env: this.environment,
-            kanren: this.kanren
-          });
-          resolve(v);
-        } catch (err) {
-          reject(err);
-        }
-      })
-        .then(evaluations => {
-          for (let statement of evaluations) {
-            if (statement !== undefined) {
-              output += "> " + prettify(statement) + "\n";
-            }
-          }
-        })
-        .catch(err => {
-          output += err;
-          console.error(err);
-        })
-        .finally(() => {
-          console.log("finished evaluating");
-          this.feedback = output;
-          this.evaluating = false;
-        });
+      let evaluations = [];
+
+      try {
+        evaluations = evaluateFile(this.code);
+        evaluations = evaluations.filter(s => s.length !== 0);
+        evaluations = evaluations.map(s => "> " + s);
+        this.feedback = evaluations.join("\n");
+        console.log("finished evaluating!");
+      } catch (e) {
+        this.feedback = e.message;
+        console.log("error occurred while evaluating!");
+        console.error(e);
+      }
     }
   },
   data() {
     return {
-      environment: STANDARD_ENV.clone(),
-      evaluating: false,
+      code: dedent`(define fib
+                      (lambda (n)
+                          (if (< n 2)
+                              1
+                              (+ (fib (- n 1)) (fib (- n 2))))))
+                    
+                    (fib 20)
+                    
+                    (check-expect (fib 4) 5)
+                    (check-expect (fib 7) 21)
 
-      kanren: false,
-      code:
-        "(define fib\n  (lambda (n)\n    (if (< n 2)\n        1\n        (+ (fib (- n 1)) (fib (- n 2))))))\n(fib 20)\n\n(check-equal? (fib 4) 5)\n(check-equal? (fib 7) 21)\n;; (check-equal? (fib 10) 890)\n\n;; to enable minikanren press the red button, then uncomment and run the expression below! \n;; (run 2 (q w) (appendo q w '(1 2 3 4 5)))",
+                    ;; uncomment the line below to see what happens when a test fails!
+                    ;; (check-expect (fib 10) "a wrong answer")
+
+                    #| multi 
+                       line comments are supported but sadly #; are not (yet)
+                    |#
+                    
+                    (cons 'cons (cons 'is (cons 'supported empty)))
+                    '(so is quotation)
+                    \`(and ,(string-append "quasiquotes" " and " "unquotes"))
+
+                    (filter (lambda (x) (not (string=? x "garbage"))) '("list abstractions " "garbage" "are supported too!"))
+
+                    (define-struct person [first last uni grad-year])
+                    \`(created by ,(make-person 'Ryan 'Jung 'Northeastern 2023))
+                    `,
+
       feedback: "> Click the green Run button to evaluate your code!",
       editorOptions: {
         tabSize: 4,
